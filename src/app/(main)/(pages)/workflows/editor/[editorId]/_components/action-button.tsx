@@ -8,6 +8,7 @@ import { onCreateNodeTemplate } from '../../../_actions/workflow-connections'
 import { toast } from 'sonner'
 import { onCreateNewPageInDatabase } from '@/app/(main)/(pages)/connections/_actions/notion-connection'
 import { postMessageToSlack } from '@/app/(main)/(pages)/connections/_actions/slack-connection'
+import { createWorkflowTrigger } from '../../_actions/trigger-actions'
 
 type Props = {
   currentService: string
@@ -23,6 +24,7 @@ const ActionButton = ({
   setChannels,
 }: Props) => {
   const pathname = usePathname()
+  const workflowId = pathname.split('/').pop()!
 
   const onSendDiscordMessage = useCallback(async () => {
     const response = await postContentToWebHook(
@@ -117,6 +119,26 @@ const ActionButton = ({
     }
   }, [nodeConnection, channels])
 
+  const onSaveTriggerTemplate = useCallback(async () => {
+    if (!nodeConnection.triggerNode.triggerType || !nodeConnection.triggerNode.description) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    const response = await createWorkflowTrigger(
+      workflowId,
+      nodeConnection.triggerNode
+    )
+
+    if (response) {
+      nodeConnection.setTriggerNode({
+        triggerType: '',
+        description: '',
+        required: false
+      })
+    }
+  }, [nodeConnection.triggerNode, workflowId])
+
   const renderActionButton = () => {
     switch (currentService) {
       case 'Discord':
@@ -171,6 +193,16 @@ const ActionButton = ({
               Save Template
             </Button>
           </>
+        )
+
+      case 'Trigger':
+        return (
+          <Button
+            onClick={onSaveTriggerTemplate}
+            variant="outline"
+          >
+            Save Trigger
+          </Button>
         )
 
       default:

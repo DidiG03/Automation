@@ -15,9 +15,10 @@ import { onContentChange } from '@/lib/editor-utils'
 import GoogleFileDetails from './google-file-details'
 import GoogleDriveFiles from './google-drive-files'
 import ActionButton from './action-button'
-import { getFileMetaData } from '@/app/(main)/(pages)/connections/_actions/google-connection'
 import axios from 'axios'
 import { toast } from 'sonner'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 
 export interface Option {
   value: string
@@ -27,9 +28,6 @@ export interface Option {
   fixed?: boolean
   /** Group the options by providing key. */
   [key: string]: string | boolean | undefined
-}
-interface GroupOption {
-  [key: string]: Option[]
 }
 
 type Props = {
@@ -67,13 +65,15 @@ const ContentBasedOnTitle = ({
     }
     reqGoogle()
   }, [])
-
+  
   // @ts-ignore
   const nodeConnectionType: any = nodeConnection[nodeMapper[title]]
-  if (!nodeConnectionType) return <p>Not connected</p>
+  if (!nodeConnectionType && title !== 'Trigger') return <p className="text-sm text-center text-muted-foreground">Not Available</p>
 
   const isConnected =
-    title === 'Google Drive'
+    title === 'Trigger' 
+      ? true  // Always show Trigger content
+      : title === 'Google Drive'
       ? !nodeConnection.isLoading
       : !!nodeConnectionType[
           `${
@@ -87,7 +87,57 @@ const ContentBasedOnTitle = ({
           }`
         ]
 
-  if (!isConnected) return <p>Not connected</p>
+  if (!isConnected) return <p className="text-sm text-center text-muted-foreground">Not Available</p>
+
+  const renderTriggerContent = () => {
+    if (title !== 'Trigger') return null;
+
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="space-y-2">
+          <p>Trigger Type</p>
+          <Select 
+            value={nodeConnection.triggerNode.triggerType}
+            onValueChange={(value) => 
+              nodeConnection.setTriggerNode(prev => ({...prev, triggerType: value}))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select trigger type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="manual">Manual Trigger</SelectItem>
+              <SelectItem value="scheduled">Scheduled Trigger</SelectItem>
+              <SelectItem value="webhook">Webhook Trigger</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <p>Description</p>
+          <Input
+            type="text"
+            value={nodeConnection.triggerNode.description}
+            onChange={(e) => 
+              nodeConnection.setTriggerNode(prev => ({...prev, description: e.target.value}))
+            }
+            placeholder="Enter trigger description"
+          />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="required"
+            checked={nodeConnection.triggerNode.required}
+            onCheckedChange={(checked) =>
+              nodeConnection.setTriggerNode(prev => ({...prev, required: checked as boolean}))
+            }
+          />
+          <label htmlFor="required">Required</label>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <AccordionContent>
@@ -99,31 +149,37 @@ const ContentBasedOnTitle = ({
           </CardHeader>
         )}
         <div className="flex flex-col gap-3 px-6 py-3 pb-20">
-          <p>{title === 'Notion' ? 'Values to be stored' : 'Message'}</p>
+          {title === 'Trigger' ? (
+            renderTriggerContent()
+          ) : (
+            <>
+              <p>{title === 'Notion' ? 'Values to be stored' : 'Message'}</p>
 
-          <Input
-            type="text"
-            value={nodeConnectionType.content}
-            onChange={(event) => onContentChange(nodeConnection, title, event)}
-          />
+              <Input
+                type="text"
+                value={nodeConnectionType.content}
+                onChange={(event) => onContentChange(nodeConnection, title, event)}
+              />
 
-          {JSON.stringify(file) !== '{}' && title !== 'Google Drive' && (
-            <Card className="w-full">
-              <CardContent className="px-2 py-3">
-                <div className="flex flex-col gap-4">
-                  <CardDescription>Drive File</CardDescription>
-                  <div className="flex flex-wrap gap-2">
-                    <GoogleFileDetails
-                      nodeConnection={nodeConnection}
-                      title={title}
-                      gFile={file}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              {JSON.stringify(file) !== '{}' && title !== 'Google Drive' && (
+                <Card className="w-full">
+                  <CardContent className="px-2 py-3">
+                    <div className="flex flex-col gap-4">
+                      <CardDescription>Drive File</CardDescription>
+                      <div className="flex flex-wrap gap-2">
+                        <GoogleFileDetails
+                          nodeConnection={nodeConnection}
+                          title={title}
+                          gFile={file}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {title === 'Google Drive' && <GoogleDriveFiles />}
+            </>
           )}
-          {title === 'Google Drive' && <GoogleDriveFiles />}
           <ActionButton
             currentService={title}
             nodeConnection={nodeConnection}

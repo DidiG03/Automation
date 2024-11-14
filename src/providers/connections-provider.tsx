@@ -1,6 +1,12 @@
 'use client'
 import { createContext, useContext, useState } from 'react'
 
+export type TriggerNode = {
+  triggerType: string
+  description: string
+  required: boolean
+}
+
 export type ConnectionProviderProps = {
   discordNode: {
     webhookURL: string
@@ -22,6 +28,8 @@ export type ConnectionProviderProps = {
     notion?: string
     slack?: string
   }
+  triggerNode: TriggerNode
+  setTriggerNode: React.Dispatch<React.SetStateAction<TriggerNode>>
   setNotionNode: React.Dispatch<React.SetStateAction<any>>
   slackNode: {
     appId: string
@@ -56,6 +64,11 @@ const InitialValues: ConnectionProviderProps = {
     webhookName: '',
     guildName: '',
   },
+  triggerNode: {
+    triggerType: '',
+    description: '',
+    required: false,
+  },
   googleNode: [],
   notionNode: {
     accessToken: '',
@@ -85,6 +98,7 @@ const InitialValues: ConnectionProviderProps = {
   setSlackNode: () => undefined,
   setIsLoading: () => undefined,
   setWorkFlowTemplate: () => undefined,
+  setTriggerNode: () => undefined,
 }
 
 const ConnectionsContext = createContext(InitialValues)
@@ -95,11 +109,11 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
   const [googleNode, setGoogleNode] = useState(InitialValues.googleNode)
   const [notionNode, setNotionNode] = useState(InitialValues.notionNode)
   const [slackNode, setSlackNode] = useState(InitialValues.slackNode)
+  const [triggerNode, setTriggerNode] = useState(InitialValues.triggerNode)
   const [isLoading, setIsLoading] = useState(InitialValues.isLoading)
   const [workflowTemplate, setWorkFlowTemplate] = useState(
     InitialValues.workflowTemplate
   )
-
   const values = {
     discordNode,
     setDiscordNode,
@@ -111,6 +125,8 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
     setSlackNode,
     isLoading,
     setIsLoading,
+    triggerNode,
+    setTriggerNode,
     workflowTemplate,
     setWorkFlowTemplate,
   }

@@ -37,8 +37,9 @@ export type EditorCanvasTypes =
   | 'Wait'
 
 export type ManualTriggerConfig = {
+  type: string
   description?: string
-  runImmediately?: boolean
+  required?: boolean
 }
 
 export type TriggerConfig = ManualTriggerConfig
@@ -50,8 +51,8 @@ export type EditorCanvasCardType = {
   current: boolean
   metadata: {
     triggerType?: 'manual'
-    config?: TriggerConfig
-    // ... other metadata properties
+    description?: string
+    required?: boolean
   }
   type: EditorCanvasTypes
 }
