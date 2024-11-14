@@ -31,6 +31,7 @@ model User {
   Slack                 Slack[]
   connections           Connections[]
   workflows             Workflows[]
+  workflowTriggers      WorkflowTrigger[]
 }
 
 model LocalGoogleCredential {
@@ -104,7 +105,7 @@ model Connections {
 }
 
 model Workflows {
-  id                String   @id @default(uuid())
+  id                String            @id @default(uuid())
   nodes             String?
   edges             String?
   name              String
@@ -117,8 +118,24 @@ model Workflows {
   notionDbId        String?
   flowPath          String?
   cronPath          String?
-  publish           Boolean? @default(false)
+  publish           Boolean?          @default(false)
   description       String
-  User              User     @relation(fields: [userId], references: [clerkId])
+  User              User              @relation(fields: [userId], references: [clerkId])
   userId            String
+  triggers          WorkflowTrigger[]
+}
+
+model WorkflowTrigger {
+  id         String    @id @default(uuid())
+  workflowId String
+  type       String // 'manual'
+  description String
+  runImmediately Boolean
+  userId     String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  workflow   Workflows @relation(fields: [workflowId], references: [id])
+  user       User      @relation(fields: [userId], references: [clerkId])
+
+  @@unique([workflowId, type])
 }

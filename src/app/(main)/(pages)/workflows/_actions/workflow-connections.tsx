@@ -161,7 +161,7 @@ export const onCreateWorkflow = async (name: string, description: string) => {
       },
     })
 
-    if (workflow) return { message: 'workflow created' }
+    if (workflow) return { message: 'Workflow Created' }
     return { message: 'Oops! try again' }
   }
 }

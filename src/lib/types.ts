@@ -11,7 +11,7 @@ export const WorkflowFormSchema = z.object({
   description: z.string().min(1, 'Required'),
 })
 
-export type ConnectionTypes = 'Google Drive' | 'Notion' | 'Slack' | 'Discord'
+export type ConnectionTypes = 'Google Drive' | 'Notion' | 'Slack' | 'Discord' | 'Trigger'
 
 export type Connection = {
   title: ConnectionTypes
@@ -36,12 +36,23 @@ export type EditorCanvasTypes =
   | 'Action'
   | 'Wait'
 
+export type ManualTriggerConfig = {
+  description?: string
+  runImmediately?: boolean
+}
+
+export type TriggerConfig = ManualTriggerConfig
+
 export type EditorCanvasCardType = {
   title: string
   description: string
   completed: boolean
   current: boolean
-  metadata: any
+  metadata: {
+    triggerType?: 'manual'
+    config?: TriggerConfig
+    // ... other metadata properties
+  }
   type: EditorCanvasTypes
 }
 
@@ -83,10 +94,21 @@ export type EditorActions =
         element: EditorNode
       }
     }
+  | {
+      type: 'UPDATE_EDGES'
+      payload: {
+        edges: {
+          id: string
+          source: string
+          target: string
+        }[]
+      }
+    }
 
 export const nodeMapper: Record<string, string> = {
   Notion: 'notionNode',
   Slack: 'slackNode',
   Discord: 'discordNode',
+  Trigger: 'triggerNode',
   'Google Drive': 'googleNode',
 }

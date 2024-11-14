@@ -156,6 +156,13 @@ export const CONNECTIONS: Connection[] = [
     alwaysTrue: true,
   },
   {
+    title: 'Trigger',
+    description: 'Connect your Fuzzy to trigger workflows',
+    image: '/fuzzieLogo.png',
+    connectionKey: 'triggerNode',
+    alwaysTrue: true,
+  },
+  {
     title: 'Discord',
     description: 'Connect your discord to send notification and messages',
     image: '/discord.png',

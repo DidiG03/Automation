@@ -8,6 +8,7 @@ import {
   onFlowPublish,
 } from '../_actions/workflow-connections'
 import { toast } from 'sonner'
+import { useEditor } from '@/providers/editor-provider'
 
 type Props = {
   children: React.ReactNode
@@ -19,6 +20,19 @@ const FlowInstance = ({ children, edges, nodes }: Props) => {
   const pathname = usePathname()
   const [isFlow, setIsFlow] = useState([])
   const { nodeConnection } = useNodeConnections()
+  const { dispatch } = useEditor()
+
+  useEffect(() => {
+    if (edges && nodes) {
+      dispatch({
+        type: 'LOAD_DATA',
+        payload: {
+          elements: nodes,
+          edges: edges,
+        },
+      })
+    }
+  }, [])
 
   const onFlowAutomation = useCallback(async () => {
     const flow = await onCreateNodesEdges(

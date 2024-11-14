@@ -102,7 +102,18 @@ const editorReducer = (
         editor: {
           ...state.editor,
           elements: action.payload.elements || initialEditorState.elements,
-          edges: action.payload.edges,
+          edges: action.payload.edges || initialEditorState.edges,
+        },
+        history: {
+          history: [
+            ...state.history.history,
+            {
+              ...state.editor,
+              elements: action.payload.elements || initialEditorState.elements,
+              edges: action.payload.edges || initialEditorState.edges,
+            },
+          ],
+          currentIndex: state.history.currentIndex + 1,
         },
       }
     case 'SELECTED_ELEMENT':
@@ -111,6 +122,24 @@ const editorReducer = (
         editor: {
           ...state.editor,
           selectedNode: action.payload.element,
+        },
+      }
+    case 'UPDATE_EDGES':
+      return {
+        ...state,
+        editor: {
+          ...state.editor,
+          edges: action.payload.edges,
+        },
+        history: {
+          history: [
+            ...state.history.history,
+            {
+              ...state.editor,
+              edges: action.payload.edges,
+            },
+          ],
+          currentIndex: state.history.currentIndex + 1,
         },
       }
     default:
