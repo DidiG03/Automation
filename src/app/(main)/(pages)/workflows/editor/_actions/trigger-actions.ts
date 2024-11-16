@@ -12,6 +12,7 @@ export const createWorkflowTrigger = async (
     const response = await axios.post('/api/triggers', {
       workflowId,
       type: triggerData.triggerType,
+      triggerName: triggerData.triggerName,
       description: triggerData.description,
       runImmediately: triggerData.required
     })

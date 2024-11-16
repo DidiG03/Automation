@@ -83,6 +83,18 @@ export const onAddTemplate = (
     onAddTemplateSlack(nodeConnection, template)
   } else if (title === 'Discord') {
     onAddTemplateDiscord(nodeConnection, template)
+  } else if (title === 'Trigger') {
+    nodeConnection.setTriggerNode((prev: any) => ({
+      ...prev,
+      description: template,
+      triggerType: 'manual',
+      loadedTrigger: {
+        triggerType: 'manual',
+        description: template,
+        triggerName: `Trigger ${template.slice(0, 15)}...`,
+        required: prev.required
+      }
+    }))
   }
 }
 
@@ -140,6 +152,14 @@ export const onConnections = async (
       })
     }
   }
+
+  try {
+    const response = await fetch('/api/workflows');
+    const workflows = await response.json();
+    await loadTemplatesFromWorkflow(nodeConnection, workflows);
+  } catch (error) {
+    console.error('Failed to load templates:', error);
+  }
 }
 
 export const fetchBotSlackChannels = async (
@@ -157,4 +177,58 @@ export const onNotionContent = (
     ...prev,
     content: event.target.value,
   }))
+}
+
+export const loadTemplatesFromWorkflow = async (
+  nodeConnection: ConnectionProviderProps,
+  workflows: any[]
+) => {
+  const discordTemplates = workflows
+    .filter(w => w.discordTemplate)
+    .map(w => w.discordTemplate)
+    .filter((template): template is string => !!template);
+
+  const notionTemplates = workflows
+    .filter(w => w.notionTemplate)
+    .map(w => w.notionTemplate)
+    .filter((template): template is string => !!template);
+
+  const slackTemplates = workflows
+    .filter(w => w.slackTemplate)
+    .map(w => w.slackTemplate)
+    .filter((template): template is string => !!template);
+
+  // First, fetch the workflow triggers
+  try {
+    const response = await fetch('/api/triggers');
+    const workflowTriggers = await response.json();
+    
+    // Map the triggers to just their description strings for rendering
+    const triggerTemplates = workflowTriggers
+      .filter((trigger: any) => trigger.type === 'manual')
+      .map((trigger: any) => trigger.description);
+
+    nodeConnection.setTriggerNode((prev: any) => ({
+      ...prev,
+      savedTemplates: triggerTemplates
+    }));
+  } catch (error) {
+    console.error('Failed to load trigger templates:', error);
+  }
+
+  // Existing template setters
+  nodeConnection.setDiscordNode((prev: any) => ({
+    ...prev,
+    savedTemplates: discordTemplates
+  }));
+
+  nodeConnection.setNotionNode((prev: any) => ({
+    ...prev,
+    savedTemplates: notionTemplates
+  }));
+
+  nodeConnection.setSlackNode((prev: any) => ({
+    ...prev,
+    savedTemplates: slackTemplates
+  }));
 }

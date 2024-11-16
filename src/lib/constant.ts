@@ -102,8 +102,17 @@ export const menuOptions = [
   { name: 'Logs', Component: Logs, href: '/logs' },
 ]
 
-export const EditorCanvasDefaultCardTypes = {
-  Email: { description: 'Send and email to a user', type: 'Action' },
+export const EditorCanvasDefaultCardTypes: Record<
+  string,
+  {
+    type: 'Action' | 'Trigger'
+    description: string
+  }
+> = {
+  Email: {
+    type: 'Action',
+    description: 'Send emails to recipients',
+  },
   Condition: {
     description: 'Boolean operator that creates different conditions lanes.',
     type: 'Action',

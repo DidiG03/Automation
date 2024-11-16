@@ -2,6 +2,35 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs'
 import { db } from '@/lib/db'
 
+export async function GET() {
+  try {
+    const { userId } = auth()
+    
+    if (!userId) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
+
+    const workflowTriggers = await db.workflowTrigger.findMany({
+      where: {
+        userId: userId,
+      },
+      select: {
+        id: true,
+        type: true,
+        triggerName: true,
+        description: true,
+        runImmediately: true,
+        workflowId: true,
+      },
+    })
+
+    return NextResponse.json(workflowTriggers)
+  } catch (error) {
+    console.error('[WORKFLOW_TRIGGERS_GET]', error)
+    return new NextResponse('Internal Error', { status: 500 })
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { userId } = auth()
@@ -9,7 +38,7 @@ export async function POST(req: Request) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    const { workflowId, type, description, runImmediately } = await req.json()
+    const { workflowId, type, description, runImmediately, triggerName } = await req.json()
 
     if (!workflowId || !type || !description) {
       return new NextResponse('Missing required fields', { status: 400 })
@@ -32,6 +61,7 @@ export async function POST(req: Request) {
           id: existingTrigger.id
         },
         data: {
+          triggerName,
           description,
           runImmediately
         }
@@ -44,6 +74,7 @@ export async function POST(req: Request) {
       data: {
         workflowId,
         type,
+        triggerName,
         description,
         runImmediately,
         userId

@@ -4,24 +4,44 @@ import { createContext, useContext, useState } from 'react'
 export type TriggerNode = {
   triggerType: string
   description: string
+  triggerName: string
   required: boolean
+  savedTemplates?: string[]
+  loadedTrigger?: {
+    triggerType: string
+    description: string
+    triggerName: string
+    required: boolean
+  }
+}
+
+export type DiscordNode = {
+  webhookURL: string
+  content: string
+  webhookName: string
+  guildName: string
+  savedTemplates?: string[]
+}
+
+export type EmailNode = {
+  to: string
+  subject: string
+  body: string
+  from?: string
+  savedTemplates?: string[]
 }
 
 export type ConnectionProviderProps = {
-  discordNode: {
-    webhookURL: string
-    content: string
-    webhookName: string
-    guildName: string
-  }
-  setDiscordNode: React.Dispatch<React.SetStateAction<any>>
+  discordNode: DiscordNode
+  setDiscordNode: React.Dispatch<React.SetStateAction<DiscordNode>>
   googleNode: {}[]
   setGoogleNode: React.Dispatch<React.SetStateAction<any>>
   notionNode: {
     accessToken: string
     databaseId: string
     workspaceName: string
-    content: ''
+    content: string
+    savedTemplates?: string[]
   }
   workflowTemplate: {
     discord?: string
@@ -40,6 +60,7 @@ export type ConnectionProviderProps = {
     teamId: string
     teamName: string
     content: string
+    savedTemplates?: string[]
   }
   setSlackNode: React.Dispatch<React.SetStateAction<any>>
   setWorkFlowTemplate: React.Dispatch<
@@ -51,6 +72,8 @@ export type ConnectionProviderProps = {
   >
   isLoading: boolean
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
+  emailNode: EmailNode
+  setEmailNode: React.Dispatch<React.SetStateAction<EmailNode>>
 }
 
 type ConnectionWithChildProps = {
@@ -63,11 +86,14 @@ const InitialValues: ConnectionProviderProps = {
     content: '',
     webhookName: '',
     guildName: '',
+    savedTemplates: [],
   },
   triggerNode: {
     triggerType: '',
+    triggerName: '',
     description: '',
     required: false,
+    loadedTrigger: undefined
   },
   googleNode: [],
   notionNode: {
@@ -75,6 +101,7 @@ const InitialValues: ConnectionProviderProps = {
     databaseId: '',
     workspaceName: '',
     content: '',
+    savedTemplates: [],
   },
   workflowTemplate: {
     discord: '',
@@ -90,6 +117,7 @@ const InitialValues: ConnectionProviderProps = {
     teamId: '',
     teamName: '',
     content: '',
+    savedTemplates: [],
   },
   isLoading: false,
   setGoogleNode: () => undefined,
@@ -99,6 +127,13 @@ const InitialValues: ConnectionProviderProps = {
   setIsLoading: () => undefined,
   setWorkFlowTemplate: () => undefined,
   setTriggerNode: () => undefined,
+  emailNode: {
+    to: '',
+    subject: '',
+    body: '',
+    savedTemplates: [],
+  },
+  setEmailNode: () => undefined,
 }
 
 const ConnectionsContext = createContext(InitialValues)
@@ -114,6 +149,7 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
   const [workflowTemplate, setWorkFlowTemplate] = useState(
     InitialValues.workflowTemplate
   )
+  const [emailNode, setEmailNode] = useState(InitialValues.emailNode)
   const values = {
     discordNode,
     setDiscordNode,
@@ -129,6 +165,8 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
     setTriggerNode,
     workflowTemplate,
     setWorkFlowTemplate,
+    emailNode,
+    setEmailNode,
   }
 
   return <Provider value={values}>{children}</Provider>

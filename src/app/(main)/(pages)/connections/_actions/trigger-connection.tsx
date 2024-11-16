@@ -3,7 +3,12 @@ import { TriggerNode } from "@/providers/connections-provider"
 interface TriggerParams {
   type: string
   workflowId: string
-  triggerConfig: TriggerNode
+  triggerConfig: {
+    triggerType: string
+    description: string
+    triggerName: string
+    required: boolean
+  }
 }
 
 interface TriggerResponse {
@@ -13,7 +18,7 @@ interface TriggerResponse {
 
 export async function executeTrigger(params: TriggerParams): Promise<TriggerResponse> {
   try {
-    const response = await fetch('/api/workflow/trigger', {
+    const response = await fetch('/api/triggers/execute', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -21,11 +26,16 @@ export async function executeTrigger(params: TriggerParams): Promise<TriggerResp
       body: JSON.stringify(params),
     })
 
+    const data = await response.json()
+
     if (!response.ok) {
-      throw new Error('Failed to execute trigger')
+      throw new Error(data.message || 'Failed to execute trigger')
     }
 
-    return await response.json()
+    return {
+      success: true,
+      message: data.message
+    }
   } catch (error) {
     console.error('Trigger execution failed:', error)
     return {

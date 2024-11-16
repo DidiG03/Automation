@@ -24,9 +24,7 @@ export interface Option {
   value: string
   label: string
   disable?: boolean
-  /** fixed option that can't be removed. */
   fixed?: boolean
-  /** Group the options by providing key. */
   [key: string]: string | boolean | undefined
 }
 
@@ -68,11 +66,12 @@ const ContentBasedOnTitle = ({
   
   // @ts-ignore
   const nodeConnectionType: any = nodeConnection[nodeMapper[title]]
-  if (!nodeConnectionType && title !== 'Trigger') return <p className="text-sm text-center text-muted-foreground">Not Available</p>
+  
+  if (!nodeConnectionType) return <p className="text-sm text-center text-muted-foreground"></p>
 
   const isConnected =
     title === 'Trigger' 
-      ? true  // Always show Trigger content
+      ? true 
       : title === 'Google Drive'
       ? !nodeConnection.isLoading
       : !!nodeConnectionType[
@@ -87,7 +86,7 @@ const ContentBasedOnTitle = ({
           }`
         ]
 
-  if (!isConnected) return <p className="text-sm text-center text-muted-foreground">Not Available</p>
+  if (!isConnected) return <p className="text-sm text-center text-muted-foreground"></p>
 
   const renderTriggerContent = () => {
     if (title !== 'Trigger') return null;
@@ -112,7 +111,17 @@ const ContentBasedOnTitle = ({
             </SelectContent>
           </Select>
         </div>
-
+        <div className="space-y-2">
+          <p>Trigger Name</p>
+          <Input
+            type="text"
+            value={nodeConnection.triggerNode.triggerName}
+            onChange={(e) => 
+              nodeConnection.setTriggerNode(prev => ({...prev, triggerName: e.target.value}))
+            }
+            placeholder="Enter trigger name"
+          />
+        </div>
         <div className="space-y-2">
           <p>Description</p>
           <Input

@@ -112,4 +112,11 @@ export const nodeMapper: Record<string, string> = {
   Discord: 'discordNode',
   Trigger: 'triggerNode',
   'Google Drive': 'googleNode',
+  Email: 'emailNode',
 }
+
+export const EmailConfigSchema = z.object({
+  to: z.string().email('Valid email required'),
+  subject: z.string().min(1, 'Subject is required'),
+  body: z.string().min(1, 'Body is required'),
+})

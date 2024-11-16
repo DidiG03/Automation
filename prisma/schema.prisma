@@ -129,6 +129,7 @@ model WorkflowTrigger {
   id         String    @id @default(uuid())
   workflowId String
   type       String // 'manual'
+  triggerName String
   description String
   runImmediately Boolean
   userId     String

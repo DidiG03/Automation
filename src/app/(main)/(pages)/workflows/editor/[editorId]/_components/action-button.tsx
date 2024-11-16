@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { onCreateNewPageInDatabase } from '@/app/(main)/(pages)/connections/_actions/notion-connection'
 import { postMessageToSlack } from '@/app/(main)/(pages)/connections/_actions/slack-connection'
 import { createWorkflowTrigger } from '../../_actions/trigger-actions'
+import { onAddTemplate } from '@/lib/editor-utils'
 
 type Props = {
   currentService: string
@@ -131,11 +132,42 @@ const ActionButton = ({
     )
 
     if (response) {
-      nodeConnection.setTriggerNode({
+      nodeConnection.setTriggerNode(prev => ({
         triggerType: '',
+        triggerName: '',
         description: '',
-        required: false
-      })
+        required: false,
+        loadedTrigger: prev.loadedTrigger,
+        savedTemplates: prev.savedTemplates
+      }))
+      toast.success('Trigger saved')
+    }
+  }, [nodeConnection.triggerNode, workflowId])
+
+  const onSaveAndLoadTrigger = useCallback(async () => {
+    if (!nodeConnection.triggerNode.triggerType || !nodeConnection.triggerNode.description) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    const response = await createWorkflowTrigger(
+      workflowId,
+      nodeConnection.triggerNode
+    )
+
+    if (response) {
+      nodeConnection.setTriggerNode(prev => ({
+        ...prev,
+        loadedTrigger: {
+          triggerType: prev.triggerType,
+          triggerName: prev.triggerName,
+          description: prev.description,
+          required: prev.required
+        },
+        savedTemplates: prev.savedTemplates ? [...prev.savedTemplates, prev.description] : [prev.description]
+      }))
+      
+      toast.success('Trigger saved and loaded')
     }
   }, [nodeConnection.triggerNode, workflowId])
 
@@ -197,12 +229,20 @@ const ActionButton = ({
 
       case 'Trigger':
         return (
-          <Button
-            onClick={onSaveTriggerTemplate}
-            variant="outline"
-          >
-            Save Trigger
-          </Button>
+          <>
+            <Button
+              onClick={onSaveTriggerTemplate}
+              variant="outline"
+            >
+              Save Trigger
+            </Button>
+            <Button 
+              onClick={onSaveAndLoadTrigger}
+              variant="outline"
+            >
+              Save & Load Trigger
+            </Button>
+          </>
         )
 
       default:
