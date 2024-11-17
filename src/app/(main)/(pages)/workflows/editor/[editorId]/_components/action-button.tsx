@@ -303,25 +303,6 @@ const ActionButton = ({
             </Button>
           </>
         )
-
-      case 'Email':
-        return (
-          <>
-            <Button
-              onClick={onSaveEmailTemplate}
-              variant="outline"
-            >
-              Save Template
-            </Button>
-            <Button 
-              onClick={onSaveAndLoadEmailTemplate}
-              variant="outline"
-            >
-              Save & Load Template
-            </Button>
-          </>
-        )
-
       default:
         return null
     }

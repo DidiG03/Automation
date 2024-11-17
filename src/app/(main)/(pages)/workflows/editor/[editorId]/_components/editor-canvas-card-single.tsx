@@ -82,6 +82,52 @@ const EditorCanvasCardSingle = ({ data }: { data: EditorCanvasCardType }) => {
     )
   }
 
+  const renderCardDescription = () => {
+    if (data.type === 'Trigger' && nodeConnection.triggerNode.loadedTrigger) {
+      return (
+        <>
+          <p className="text-xs text-muted-foreground/50">
+            <b className="text-muted-foreground/80">Trigger Name: </b>
+            {nodeConnection.triggerNode.savedTemplates}
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            <b className="text-muted-foreground/80">Trigger Description: </b>
+            {nodeConnection.triggerNode.loadedTrigger?.description}
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            <b className="text-muted-foreground/80">ID: </b>
+            {nodeId}
+          </p>
+        </>
+      )
+    }
+
+    if (data.type === 'Email' && nodeConnection.emailNode) {
+      return (
+        <>
+          <p className="text-xs text-muted-foreground/50">
+            <b className="text-muted-foreground/80">To: </b>
+            {nodeConnection.emailNode.to}
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            <b className="text-muted-foreground/80">Preset: </b>
+            {nodeConnection.emailNode.savedTemplates}
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            <b className="text-muted-foreground/80">ID: </b>
+            {nodeId}
+          </p>
+        </>
+      )
+    }
+    return (
+      <p className="text-xs text-muted-foreground/50">
+        <b className="text-muted-foreground/80">ID: </b>
+        {nodeId}
+      </p>
+    )
+  }
+
   return (
     <>
       {data.type !== 'Trigger' && data.type !== 'Google Drive' && (
@@ -109,22 +155,7 @@ const EditorCanvasCardSingle = ({ data }: { data: EditorCanvasCardType }) => {
           <div>{logo}</div>
           <div>
             <CardDescription className='p-3'>
-              {data.type === 'Trigger' && nodeConnection.triggerNode.loadedTrigger && (
-                <>
-                  <p className="text-xs text-muted-foreground/50">
-                    <b className="text-muted-foreground/80">Trigger Name: </b>
-                    {nodeConnection.triggerNode.savedTemplates}
-                  </p>
-                  <p className="text-xs text-muted-foreground/50">
-                    <b className="text-muted-foreground/80">Trigger Description: </b>
-                    {nodeConnection.triggerNode.loadedTrigger?.description}
-                  </p>
-                </>
-              )}
-              <p className="text-xs text-muted-foreground/50">
-                <b className="text-muted-foreground/80">ID: </b>
-                {nodeId}
-              </p>
+              {renderCardDescription()}
             </CardDescription>
           </div>
         </CardHeader>
