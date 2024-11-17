@@ -55,6 +55,13 @@ const Workflow = ({ description, id, name, publish }: Props) => {
               className="object-contain"
             />
             <Image
+              src="/gmail_Image.png"
+              alt="Google Drive"
+              height={30}
+              width={30}
+              className="object-contain"
+            />
+            <Image
               src="/discord.png"
               alt="Google Drive"
               height={30}

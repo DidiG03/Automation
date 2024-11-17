@@ -157,11 +157,18 @@ export const EditorCanvasDefaultCardTypes: Record<
 }
 
 export const CONNECTIONS: Connection[] = [
-  {
+  { 
     title: 'Google Drive',
     description: 'Connect your google drive to listen to folder changes',
     image: '/googleDrive.png',
     connectionKey: 'googleNode',
+    alwaysTrue: true,
+  },
+  {
+    title: 'Email',
+    description: 'Connect your email to send emails',
+    image: '/gmail_Image.png',
+    connectionKey: 'emailNode',
     alwaysTrue: true,
   },
   {

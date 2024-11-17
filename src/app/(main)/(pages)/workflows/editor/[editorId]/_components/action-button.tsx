@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { onCreateNewPageInDatabase } from '@/app/(main)/(pages)/connections/_actions/notion-connection'
 import { postMessageToSlack } from '@/app/(main)/(pages)/connections/_actions/slack-connection'
 import { createWorkflowTrigger } from '../../_actions/trigger-actions'
-import { onAddTemplate } from '@/lib/editor-utils'
+import { saveEmailTemplate } from '@/app/(main)/(pages)/connections/_actions/save-email-template'
 
 type Props = {
   currentService: string
@@ -171,6 +171,65 @@ const ActionButton = ({
     }
   }, [nodeConnection.triggerNode, workflowId])
 
+  const onSaveEmailTemplate = useCallback(async () => {
+    if (!nodeConnection.emailNode.to || !nodeConnection.emailNode.subject || !nodeConnection.emailNode.body) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    const response = await saveEmailTemplate({
+      workflowId,
+      name: nodeConnection.emailNode.subject,
+      to: nodeConnection.emailNode.to,
+      subject: nodeConnection.emailNode.subject,
+      body: nodeConnection.emailNode.body,
+    })
+
+    if (response.success) {
+      nodeConnection.setEmailNode(prev => ({
+        ...prev,
+        savedTemplates: prev.savedTemplates 
+          ? [...prev.savedTemplates, nodeConnection.emailNode.subject]
+          : [nodeConnection.emailNode.subject]
+      }))
+      toast.success('Email template saved')
+    } else {
+      toast.error(response.error || 'Failed to save template')
+    }
+  }, [nodeConnection.emailNode, workflowId])
+
+  const onSaveAndLoadEmailTemplate = useCallback(async () => {
+    if (!nodeConnection.emailNode.to || !nodeConnection.emailNode.subject || !nodeConnection.emailNode.body) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    const response = await saveEmailTemplate({
+      workflowId,
+      name: nodeConnection.emailNode.subject,
+      to: nodeConnection.emailNode.to,
+      subject: nodeConnection.emailNode.subject,
+      body: nodeConnection.emailNode.body,
+    })
+
+    if (response.success) {
+      nodeConnection.setEmailNode(prev => ({
+        ...prev,
+        loadedTemplate: {
+          to: prev.to,
+          subject: prev.subject,
+          body: prev.body,
+        },
+        savedTemplates: prev.savedTemplates 
+          ? [...prev.savedTemplates, prev.subject]
+          : [prev.subject]
+      }))
+      toast.success('Email template saved and loaded')
+    } else {
+      toast.error(response.error || 'Failed to save template')
+    }
+  }, [nodeConnection.emailNode, workflowId])
+
   const renderActionButton = () => {
     switch (currentService) {
       case 'Discord':
@@ -241,6 +300,24 @@ const ActionButton = ({
               variant="outline"
             >
               Save & Load Trigger
+            </Button>
+          </>
+        )
+
+      case 'Email':
+        return (
+          <>
+            <Button
+              onClick={onSaveEmailTemplate}
+              variant="outline"
+            >
+              Save Template
+            </Button>
+            <Button 
+              onClick={onSaveAndLoadEmailTemplate}
+              variant="outline"
+            >
+              Save & Load Template
             </Button>
           </>
         )

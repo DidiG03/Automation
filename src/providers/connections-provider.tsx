@@ -27,8 +27,12 @@ export type EmailNode = {
   to: string
   subject: string
   body: string
-  from?: string
   savedTemplates?: string[]
+  loadedTemplate?: {
+    to: string
+    subject: string
+    body: string
+  }
 }
 
 export type ConnectionProviderProps = {
@@ -108,6 +112,12 @@ const InitialValues: ConnectionProviderProps = {
     notion: '',
     slack: '',
   },
+  emailNode: {
+    to: '',
+    subject: '',
+    body: '',
+    savedTemplates: [],
+  },
   slackNode: {
     appId: '',
     authedUserId: '',
@@ -127,12 +137,6 @@ const InitialValues: ConnectionProviderProps = {
   setIsLoading: () => undefined,
   setWorkFlowTemplate: () => undefined,
   setTriggerNode: () => undefined,
-  emailNode: {
-    to: '',
-    subject: '',
-    body: '',
-    savedTemplates: [],
-  },
   setEmailNode: () => undefined,
 }
 
@@ -146,10 +150,10 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
   const [slackNode, setSlackNode] = useState(InitialValues.slackNode)
   const [triggerNode, setTriggerNode] = useState(InitialValues.triggerNode)
   const [isLoading, setIsLoading] = useState(InitialValues.isLoading)
+  const [emailNode, setEmailNode] = useState(InitialValues.emailNode)
   const [workflowTemplate, setWorkFlowTemplate] = useState(
     InitialValues.workflowTemplate
   )
-  const [emailNode, setEmailNode] = useState(InitialValues.emailNode)
   const values = {
     discordNode,
     setDiscordNode,

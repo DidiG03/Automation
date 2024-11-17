@@ -112,6 +112,7 @@ model Workflows {
   discordTemplate   String?
   notionTemplate    String?
   slackTemplate     String?
+  emailTemplates    EmailTemplate[]
   slackChannels     String[]
   slackAccessToken  String?
   notionAccessToken String?
@@ -139,4 +140,18 @@ model WorkflowTrigger {
   user       User      @relation(fields: [userId], references: [clerkId])
 
   @@unique([workflowId, type])
+}
+
+model EmailTemplate {
+  id          String    @id @default(uuid())
+  name        String
+  to          String
+  subject     String
+  body        String
+  workflowId  String   
+  workflow    Workflows @relation(fields: [workflowId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([workflowId, name]) // Now this works correctly
 }

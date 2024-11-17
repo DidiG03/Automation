@@ -95,6 +95,11 @@ export const onAddTemplate = (
         required: prev.required
       }
     }))
+  } else if (title === 'Email') {
+    nodeConnection.setEmailNode((prev: any) => ({
+      ...prev,
+      loadedTemplate: prev.savedTemplates?.find((t: string) => t === template)
+    }))
   }
 }
 
@@ -231,4 +236,19 @@ export const loadTemplatesFromWorkflow = async (
     ...prev,
     savedTemplates: slackTemplates
   }));
+
+  // Add email templates loading
+  try {
+    const response = await fetch('/api/email-templates');
+    const emailTemplates = await response.json();
+    
+    const templates = emailTemplates.map((template: any) => template.name);
+
+    nodeConnection.setEmailNode((prev: any) => ({
+      ...prev,
+      savedTemplates: templates
+    }));
+  } catch (error) {
+    console.error('Failed to load email templates:', error);
+  }
 }

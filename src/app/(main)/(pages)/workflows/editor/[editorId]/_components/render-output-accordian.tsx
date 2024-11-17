@@ -20,8 +20,6 @@ const RenderOutputAccordion = ({ state, nodeConnection }: Props) => {
 
   const renderContent = () => {
     switch (state.editor.selectedNode.data.type) {
-      case 'Email':
-        return <EmailConfig />
       default:
         return (
           <ContentBasedOnTitle

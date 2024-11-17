@@ -1,5 +1,3 @@
-import { TriggerNode } from "@/providers/connections-provider"
-
 interface TriggerParams {
   type: string
   workflowId: string

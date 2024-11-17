@@ -19,6 +19,7 @@ import axios from 'axios'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
+import { EmailConfig } from './email-config'
 
 export interface Option {
   value: string
@@ -72,6 +73,8 @@ const ContentBasedOnTitle = ({
   const isConnected =
     title === 'Trigger' 
       ? true 
+      : title === 'Email'
+      ? true
       : title === 'Google Drive'
       ? !nodeConnection.isLoading
       : !!nodeConnectionType[
@@ -148,6 +151,12 @@ const ContentBasedOnTitle = ({
     )
   }
 
+  const renderEmailContent = () => {
+    if (title !== 'Email') return null;
+
+    return <EmailConfig />
+  }
+
   return (
     <AccordionContent>
       <Card>
@@ -160,6 +169,8 @@ const ContentBasedOnTitle = ({
         <div className="flex flex-col gap-3 px-6 py-3 pb-20">
           {title === 'Trigger' ? (
             renderTriggerContent()
+          ) : title === 'Email' ? (
+            renderEmailContent()
           ) : (
             <>
               <p>{title === 'Notion' ? 'Values to be stored' : 'Message'}</p>

@@ -4,7 +4,7 @@ import { useNodeConnections } from '@/providers/connections-provider'
 import { useEditor } from '@/providers/editor-provider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Separator } from '@/components/ui/separator'
 import { CONNECTIONS, EditorCanvasDefaultCardTypes } from '@/lib/constant'
 import {
@@ -30,11 +30,22 @@ import RenderConnectionAccordion from './render-connection-accordion'
 import RenderOutputAccordion from './render-output-accordian'
 import { useFuzzieStore } from '@/store'
 import { nodeMapper } from '@/lib/types'
-import { TrashIcon, PlayIcon, UploadIcon } from 'lucide-react'
+import { TrashIcon, UploadIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Tooltip } from '@/components/ui/tooltip'
+import { EmailPreviewModal } from './email-preview-modal'
+import { loadEmailTemplate } from '@/app/(main)/(pages)/connections/_actions/load-email-template'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { toast } from 'sonner'
 
 type Props = {
   nodes: EditorNodeType[]
@@ -45,6 +56,9 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
   const { state } = useEditor()
   const { nodeConnection } = useNodeConnections()
   const { googleFile, setSlackChannels } = useFuzzieStore()
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('')
+  const workflowId = pathname.split('/').pop()!
+
   useEffect(() => {
     if (state) {
       onConnections(nodeConnection, state, googleFile)
@@ -60,6 +74,22 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
     }
   }, [nodeConnection])
 
+  const handleTemplateSelect = async (templateName: string) => {
+    setSelectedTemplate(templateName)
+    const response = await loadEmailTemplate(templateName, workflowId)
+    
+    if (response.success && response.template) {
+      nodeConnection.setEmailNode(prev => ({
+        ...prev,
+        to: response.template.to,
+        subject: response.template.subject,
+        body: response.template.body
+      }))
+    } else {
+      toast.error('Failed to load template')
+    }
+  }
+
   const renderSavedTemplates = () => {
     const nodeType = state.editor.selectedNode.data.title
     const connectionKey = nodeMapper[nodeType] as keyof typeof nodeConnection
@@ -70,6 +100,43 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
     
     if (!templates?.length) {
       return <div className="px-4 py-2 text-sm text-muted-foreground">No saved templates</div>
+    }
+
+    if (nodeType === 'Email') {
+      return (
+        <div className="space-y-4 px-4">
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Select
+                value={selectedTemplate}
+                onValueChange={handleTemplateSelect}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <ScrollArea className="h-[200px]">
+                    {templates.map((template: any) => (
+                      <SelectItem key={template} value={template}>
+                        {template}
+                      </SelectItem>
+                    ))}
+                  </ScrollArea>
+                </SelectContent>
+              </Select>
+              {selectedTemplate && (
+                <EmailPreviewModal
+                  template={{
+                    to: nodeConnection.emailNode.to,
+                    subject: nodeConnection.emailNode.subject,
+                    body: nodeConnection.emailNode.body
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )
     }
 
     return templates.map((template: string, index: number) => (
@@ -165,9 +232,9 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
             {state.editor.selectedNode.data.title}
           </div>
 
-          <Accordion type="multiple">
+          <Accordion type="multiple" defaultValue={["action"]}>
             <AccordionItem
-              value="Options"
+              value="account"
               className="border-y-[1px] px-2"
             >
               <AccordionTrigger className="!no-underline">
@@ -184,7 +251,7 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem
-              value="Expected Output"
+              value="action"
               className="px-2"
             >
               <AccordionTrigger className="!no-underline">
@@ -196,7 +263,9 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
               />
             </AccordionItem>
             <AccordionItem value="saved" className='px-2'>
-              <AccordionTrigger className='!no-underline'>Saved</AccordionTrigger>
+              <AccordionTrigger className='!no-underline'>
+                Saved
+              </AccordionTrigger>
               <AccordionContent>
                 {renderSavedTemplates()}
               </AccordionContent>

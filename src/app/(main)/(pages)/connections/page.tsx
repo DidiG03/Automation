@@ -97,7 +97,7 @@ const Connections = async (props: Props) => {
     })
 
     // Both Google Drive and Trigger will always be true
-    return { ...connections, 'Google Drive': true, 'Trigger': true }
+    return { ...connections, 'Google Drive': true, 'Trigger': true, 'Email': true }
   }
 
   const connections = await onUserConnections()
