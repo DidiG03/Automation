@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import { EmailConfigSchema } from './types'
 import { sendEmail } from '@/app/(main)/(pages)/connections/_actions/email-connection'
+import { useExecutionStore } from '@/store/execution-store'
 
 type NodeExecutionContext = {
   workflowId: string
@@ -18,6 +19,29 @@ export class WorkflowExecutor {
       .map(edge => edge.target)
     console.log('[getNextNodes] Found next nodes:', nextNodes)
     return nextNodes
+  }
+
+  private async executeNodeByType(node: any, context: NodeExecutionContext) {
+    switch (node.type) {
+      case 'Email':
+        return this.executeEmailNode(node, context)
+      case 'Trigger':
+        return this.executeTriggerNode(node, context)
+      // Add other node types here
+      default:
+        throw new Error(`Unsupported node type: ${node.type}`)
+    }
+  }
+
+  private async executeTriggerNode(node: any, context: NodeExecutionContext) {
+    console.log('\n[executeTriggerNode] Starting trigger node execution:', node)
+    try {
+      // Trigger nodes typically just start the workflow
+      return true
+    } catch (error) {
+      console.error('[executeTriggerNode] Error:', error)
+      throw error
+    }
   }
 
   private async executeEmailNode(node: any, context: NodeExecutionContext) {
@@ -62,7 +86,6 @@ export class WorkflowExecutor {
         throw new Error(response.message || 'Failed to send email')
       }
 
-      console.log('[executeEmailNode] Email sent successfully')
       return true
     } catch (error) {
       console.error('[executeEmailNode] Error:', error)
@@ -71,19 +94,37 @@ export class WorkflowExecutor {
   }
 
   private async executeNode(node: any, context: NodeExecutionContext) {
-    console.log('\n[executeNode] Executing node:', {
-      nodeId: node.id,
-      type: node.type,
-      data: node.data
-    })
+    const executionStore = useExecutionStore.getState()
+    
+    try {
+      // Add step when starting execution
+      executionStore.addStep({
+        id: node.id,
+        nodeType: node.type,
+        status: 'running',
+        message: `Executing ${node.type} node`,
+        timestamp: new Date()
+      })
 
-    switch (node.type) {
-      case 'Email':
-        console.log('[executeNode] Delegating to email executor')
-        return this.executeEmailNode(node, context)
-      default:
-        console.log(`[executeNode] Node type ${node.type} execution not implemented`)
-        return true
+      // Execute the node
+      const result = await this.executeNodeByType(node, context)
+
+      // Update step on success
+      executionStore.updateStep(node.id, {
+        status: 'completed',
+        message: `Successfully executed ${node.type} node`,
+        timestamp: new Date()
+      })
+
+      return result
+    } catch (error) {
+      // Update step on failure
+      executionStore.updateStep(node.id, {
+        status: 'failed',
+        message: error.message || `Failed to execute ${node.type} node`,
+        timestamp: new Date()
+      })
+      throw error
     }
   }
 
@@ -95,6 +136,9 @@ export class WorkflowExecutor {
       totalNodes: nodes.length,
       totalEdges: edges.length
     })
+
+    const executionStore = useExecutionStore.getState()
+    executionStore.clearSteps() // Clear previous execution steps
 
     try {
       // Find trigger node
