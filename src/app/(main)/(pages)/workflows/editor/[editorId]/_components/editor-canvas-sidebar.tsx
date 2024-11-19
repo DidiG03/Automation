@@ -18,6 +18,7 @@ import {
   onAddTemplate,
   onConnections,
   onDragStart,
+  evaluateCondition
 } from '@/lib/editor-utils'
 import EditorCanvasIconHelper from './editor-canvas-card-icon-hepler'
 import {
@@ -48,6 +49,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { toast } from 'sonner'
 import { ExecutionProcess } from './execution-process'
+import ActionButton from './action-button'
 
 type Props = {
   nodes: EditorNodeType[]
@@ -190,12 +192,21 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
 
     const operators: ConditionOperator[] = ['equals', 'not_equals', 'greater_than', 'less_than', 'contains']
 
+    const testCondition = () => {
+      const result = evaluateCondition({
+        leftOperand: nodeConnection.conditionNode.leftOperand,
+        operator: nodeConnection.conditionNode.operator,
+        rightOperand: nodeConnection.conditionNode.rightOperand
+      })
+      toast.info(`Condition evaluates to: ${result.toString().toUpperCase()}`)
+    }
+
     return (
       <div className="space-y-4 px-4">
         <div className="space-y-2">
           <label className="text-sm font-medium">Left Operand</label>
           <Input
-            placeholder="Enter left operand"
+            placeholder="Enter left operand (e.g., 'hello' or '10')"
             value={nodeConnection.conditionNode.leftOperand}
             onChange={(e) => nodeConnection.setConditionNode(prev => ({
               ...prev,
@@ -231,13 +242,35 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
         <div className="space-y-2">
           <label className="text-sm font-medium">Right Operand</label>
           <Input
-            placeholder="Enter right operand"
+            placeholder="Enter right operand (e.g., 'hello' or '5')"
             value={nodeConnection.conditionNode.rightOperand}
             onChange={(e) => nodeConnection.setConditionNode(prev => ({
               ...prev,
               rightOperand: e.target.value
             }))}
           />
+        </div>
+
+        <div className="flex gap-2 pt-4">
+          <Button
+            variant="secondary"
+            onClick={testCondition}
+          >
+            Test Condition
+          </Button>
+          <ActionButton 
+            currentService="Condition"
+            nodeConnection={nodeConnection}
+          />
+        </div>
+
+        <div className="text-sm text-muted-foreground mt-4">
+          <p className="font-medium">Example conditions:</p>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>String equality: left="hello" equals "hello"</li>
+            <li>Numeric comparison: left="10" greater_than "5"</li>
+            <li>Contains check: left="hello world" contains "world"</li>
+          </ul>
         </div>
       </div>
     )
@@ -246,6 +279,74 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
   return (
     <aside className="h-full">
       <Tabs defaultValue="nodes">
+      <TabsList className="bg-transparent">
+          <TabsTrigger value="actions">Actions</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent
+          value="actions"
+          className="flex flex-col gap-4"
+        >
+          {Object.entries(EditorCanvasDefaultCardTypes)
+            .filter(
+              ([_, cardType]) =>
+                (!nodes.length && cardType.type === 'Trigger') ||
+                (nodes.length && cardType.type === 'Action')
+            )
+            .map(([cardKey, cardValue]) => (
+              <Card
+                key={cardKey}
+                draggable
+                className="w-full cursor-grab border-black bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900"
+                onDragStart={(event) =>
+                  onDragStart(event, cardKey as EditorCanvasTypes)
+                }
+              >
+                <CardHeader className="flex flex-row items-center gap-4 p-4">
+                  <EditorCanvasIconHelper type={cardKey as EditorCanvasTypes} />
+                  <div className="flex-1">
+                    <CardTitle className="text-md">
+                      {cardKey}
+                      <CardDescription>{cardValue.description}</CardDescription>
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+        </TabsContent>
+
+      <Separator />
+        <TabsContent
+          value="actions"
+          className="flex flex-col gap-4 p-4"
+        >
+          {Object.entries(EditorCanvasDefaultCardTypes)
+            .filter(
+              ([_, cardType]) =>
+                (!nodes.length && cardType.type === 'Trigger') ||
+                (nodes.length && cardType.type === 'Action')
+            )
+            .map(([cardKey, cardValue]) => (
+              <Card
+                key={cardKey}
+                draggable
+                className="w-full cursor-grab border-black bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900"
+                onDragStart={(event) =>
+                  onDragStart(event, cardKey as EditorCanvasTypes)
+                }
+              >
+                <CardHeader className="flex flex-row items-center gap-4 p-4">
+                  <EditorCanvasIconHelper type={cardKey as EditorCanvasTypes} />
+                  <div className="flex-1">
+                    <CardTitle className="text-md">
+                      {cardKey}
+                      <CardDescription>{cardValue.description}</CardDescription>
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+        </TabsContent>
         <TabsList className="w-full">
           <TabsTrigger value="nodes">Nodes</TabsTrigger>
           <TabsTrigger value="execution">Execution</TabsTrigger>

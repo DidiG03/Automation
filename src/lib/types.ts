@@ -125,6 +125,7 @@ export type ConditionConfig = {
   leftOperand: string
   operator: ConditionOperator | undefined
   rightOperand: string
+  savedTemplates?: string[]
 }
 
 export type ConditionOperator = 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains'

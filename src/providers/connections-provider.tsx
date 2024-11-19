@@ -38,8 +38,9 @@ export type EmailNode = {
 
 export type ConditionNode = {
   leftOperand: string
-  operator: ConditionOperator
+  operator: ConditionOperator | undefined
   rightOperand: string
+  savedTemplates?: string[]
 }
 
 export type ConnectionProviderProps = {
@@ -143,6 +144,7 @@ const InitialValues: ConnectionProviderProps = {
     leftOperand: '',
     operator: undefined,
     rightOperand: '',
+    savedTemplates: [],
   },
   setGoogleNode: () => undefined,
   setDiscordNode: () => undefined,

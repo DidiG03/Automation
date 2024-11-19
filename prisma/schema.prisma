@@ -113,6 +113,7 @@ model Workflows {
   notionTemplate    String?
   slackTemplate     String?
   emailTemplates    EmailTemplate[]
+  conditionTemplates Json?
   slackChannels     String[]
   slackAccessToken  String?
   notionAccessToken String?
