@@ -142,6 +142,25 @@ const editorReducer = (
           currentIndex: state.history.currentIndex + 1,
         },
       }
+    case 'UPDATE_NODE': {
+      return {
+        ...state,
+        editor: {
+          ...state.editor,
+          elements: action.payload.elements
+        },
+        history: {
+          history: [
+            ...state.history.history,
+            {
+              ...state.editor,
+              elements: action.payload.elements
+            }
+          ],
+          currentIndex: state.history.currentIndex + 1
+        }
+      }
+    }
     default:
       return state
   }
