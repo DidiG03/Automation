@@ -1,4 +1,5 @@
 'use client'
+import { ConditionConfig, ConditionOperator } from '@/lib/types'
 import { createContext, useContext, useState } from 'react'
 
 export type TriggerNode = {
@@ -35,6 +36,12 @@ export type EmailNode = {
   }
 }
 
+export type ConditionNode = {
+  leftOperand: string
+  operator: ConditionOperator
+  rightOperand: string
+}
+
 export type ConnectionProviderProps = {
   discordNode: DiscordNode
   setDiscordNode: React.Dispatch<React.SetStateAction<DiscordNode>>
@@ -55,6 +62,8 @@ export type ConnectionProviderProps = {
   triggerNode: TriggerNode
   setTriggerNode: React.Dispatch<React.SetStateAction<TriggerNode>>
   setNotionNode: React.Dispatch<React.SetStateAction<any>>
+  conditionNode: ConditionConfig
+  setConditionNode: React.Dispatch<React.SetStateAction<ConditionConfig>>
   slackNode: {
     appId: string
     authedUserId: string
@@ -130,6 +139,11 @@ const InitialValues: ConnectionProviderProps = {
     savedTemplates: [],
   },
   isLoading: false,
+  conditionNode: {
+    leftOperand: '',
+    operator: undefined,
+    rightOperand: '',
+  },
   setGoogleNode: () => undefined,
   setDiscordNode: () => undefined,
   setNotionNode: () => undefined,
@@ -138,6 +152,7 @@ const InitialValues: ConnectionProviderProps = {
   setWorkFlowTemplate: () => undefined,
   setTriggerNode: () => undefined,
   setEmailNode: () => undefined,
+  setConditionNode: () => undefined,
 }
 
 const ConnectionsContext = createContext(InitialValues)
@@ -151,6 +166,7 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
   const [triggerNode, setTriggerNode] = useState(InitialValues.triggerNode)
   const [isLoading, setIsLoading] = useState(InitialValues.isLoading)
   const [emailNode, setEmailNode] = useState(InitialValues.emailNode)
+  const [conditionNode, setConditionNode] = useState(InitialValues.conditionNode)
   const [workflowTemplate, setWorkFlowTemplate] = useState(
     InitialValues.workflowTemplate
   )
@@ -171,6 +187,8 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
     setWorkFlowTemplate,
     emailNode,
     setEmailNode,
+    conditionNode,
+    setConditionNode,
   }
 
   return <Provider value={values}>{children}</Provider>

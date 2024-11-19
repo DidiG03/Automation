@@ -1,5 +1,5 @@
 'use client'
-import { EditorCanvasTypes, EditorNodeType } from '@/lib/types'
+import { EditorCanvasTypes, EditorNodeType, ConditionOperator } from '@/lib/types'
 import { useNodeConnections } from '@/providers/connections-provider'
 import { useEditor } from '@/providers/editor-provider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -45,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { toast } from 'sonner'
 import { ExecutionProcess } from './execution-process'
 
@@ -183,78 +184,68 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
     ))
   }
 
+  const renderConditionSettings = () => {
+    const nodeType = state.editor.selectedNode.data.title
+    if (nodeType !== 'Condition') return null
+
+    const operators: ConditionOperator[] = ['equals', 'not_equals', 'greater_than', 'less_than', 'contains']
+
+    return (
+      <div className="space-y-4 px-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Left Operand</label>
+          <Input
+            placeholder="Enter left operand"
+            value={nodeConnection.conditionNode.leftOperand}
+            onChange={(e) => nodeConnection.setConditionNode(prev => ({
+              ...prev,
+              leftOperand: e.target.value
+            }))}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Operator</label>
+          <Select
+            value={nodeConnection.conditionNode.operator || ''}
+            onValueChange={(value: ConditionOperator) => 
+              nodeConnection.setConditionNode(prev => ({
+                ...prev,
+                operator: value
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select operator" />
+            </SelectTrigger>
+            <SelectContent>
+              {operators.map((op) => (
+                <SelectItem key={op} value={op}>
+                  {op.replace('_', ' ')}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Right Operand</label>
+          <Input
+            placeholder="Enter right operand"
+            value={nodeConnection.conditionNode.rightOperand}
+            onChange={(e) => nodeConnection.setConditionNode(prev => ({
+              ...prev,
+              rightOperand: e.target.value
+            }))}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <aside className="h-full">
       <Tabs defaultValue="nodes">
-      <TabsList className="bg-transparent">
-          <TabsTrigger value="actions">Actions</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-        <TabsContent
-          value="actions"
-          className="flex flex-col gap-4"
-        >
-          {Object.entries(EditorCanvasDefaultCardTypes)
-            .filter(
-              ([_, cardType]) =>
-                (!nodes.length && cardType.type === 'Trigger') ||
-                (nodes.length && cardType.type === 'Action')
-            )
-            .map(([cardKey, cardValue]) => (
-              <Card
-                key={cardKey}
-                draggable
-                className="w-full cursor-grab border-black bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900"
-                onDragStart={(event) =>
-                  onDragStart(event, cardKey as EditorCanvasTypes)
-                }
-              >
-                <CardHeader className="flex flex-row items-center gap-4 p-4">
-                  <EditorCanvasIconHelper type={cardKey as EditorCanvasTypes} />
-                  <div className="flex-1">
-                    <CardTitle className="text-md">
-                      {cardKey}
-                      <CardDescription>{cardValue.description}</CardDescription>
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-        </TabsContent>
-
-      <Separator />
-        <TabsContent
-          value="actions"
-          className="flex flex-col gap-4 p-4"
-        >
-          {Object.entries(EditorCanvasDefaultCardTypes)
-            .filter(
-              ([_, cardType]) =>
-                (!nodes.length && cardType.type === 'Trigger') ||
-                (nodes.length && cardType.type === 'Action')
-            )
-            .map(([cardKey, cardValue]) => (
-              <Card
-                key={cardKey}
-                draggable
-                className="w-full cursor-grab border-black bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900"
-                onDragStart={(event) =>
-                  onDragStart(event, cardKey as EditorCanvasTypes)
-                }
-              >
-                <CardHeader className="flex flex-row items-center gap-4 p-4">
-                  <EditorCanvasIconHelper type={cardKey as EditorCanvasTypes} />
-                  <div className="flex-1">
-                    <CardTitle className="text-md">
-                      {cardKey}
-                      <CardDescription>{cardValue.description}</CardDescription>
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-        </TabsContent>
-
         <TabsList className="w-full">
           <TabsTrigger value="nodes">Nodes</TabsTrigger>
           <TabsTrigger value="execution">Execution</TabsTrigger>
@@ -289,10 +280,16 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
               <AccordionTrigger className="!no-underline">
                 Action
               </AccordionTrigger>
-              <RenderOutputAccordion
-                state={state}
-                nodeConnection={nodeConnection}
-              />
+              <AccordionContent>
+                {state.editor.selectedNode.data.title === 'Condition' ? (
+                  renderConditionSettings()
+                ) : (
+                  <RenderOutputAccordion
+                    state={state}
+                    nodeConnection={nodeConnection}
+                  />
+                )}
+              </AccordionContent>
             </AccordionItem>
             <AccordionItem value="saved" className='px-2'>
               <AccordionTrigger className='!no-underline'>

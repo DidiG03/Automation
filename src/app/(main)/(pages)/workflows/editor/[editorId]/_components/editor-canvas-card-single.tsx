@@ -11,6 +11,7 @@ import { useNodeConnections } from '@/providers/connections-provider'
 import { executeTrigger } from '@/app/(main)/(pages)/connections/_actions/trigger-connection'
 import { toast } from 'sonner'
 import { usePathname } from 'next/navigation'
+import { processWorkflowNodes } from '@/lib/editor-utils'
 
 import {
   Card,
@@ -58,7 +59,15 @@ const EditorCanvasCardSingle = ({ data }: { data: EditorCanvasCardType }) => {
               workflowId: pathname.split('/').pop()!,
               triggerConfig
             })
+            
             if (response.success) {
+              // Process the workflow
+              await processWorkflowNodes(
+                state.editor.elements,
+                state.editor.edges,
+                nodeId!,
+                nodeConnection
+              )
               toast.success(response.message || 'Trigger executed successfully')
             } else {
               toast.error(response.message || 'Failed to execute trigger')

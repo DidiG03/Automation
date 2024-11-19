@@ -1,5 +1,5 @@
 import { ConnectionProviderProps } from '@/providers/connections-provider'
-import { EditorCanvasCardType } from './types'
+import { EditorCanvasCardType, EditorNodeType } from './types'
 import { EditorState } from '@/providers/editor-provider'
 import { getDiscordConnectionUrl } from '@/app/(main)/(pages)/connections/_actions/discord-connection'
 import {
@@ -11,6 +11,7 @@ import {
   listBotChannels,
 } from '@/app/(main)/(pages)/connections/_actions/slack-connection'
 import { Option } from '@/components/ui/multiple-selector'
+import { ConditionOperator } from '@/lib/types'
 
 export const onDragStart = (
   event: any,
@@ -250,5 +251,64 @@ export const loadTemplatesFromWorkflow = async (
     }));
   } catch (error) {
     console.error('Failed to load email templates:', error);
+  }
+}
+
+export const evaluateCondition = (condition: {
+  leftOperand: string,
+  operator: ConditionOperator | undefined,
+  rightOperand: string
+}) => {
+  const { leftOperand, operator, rightOperand } = condition
+
+  if (!operator) return false
+
+  switch (operator) {
+    case 'equals':
+      return leftOperand === rightOperand
+    case 'not_equals':
+      return leftOperand !== rightOperand
+    case 'greater_than':
+      return Number(leftOperand) > Number(rightOperand)
+    case 'less_than':
+      return Number(leftOperand) < Number(rightOperand)
+    case 'contains':
+      return leftOperand.includes(rightOperand)
+    default:
+      return false
+  }
+}
+
+export const getNextNodes = (
+  currentNodeId: string,
+  edges: { source: string; target: string }[]
+) => {
+  return edges
+    .filter(edge => edge.source === currentNodeId)
+    .map(edge => edge.target)
+}
+
+export const processWorkflowNodes = async (
+  nodes: EditorNodeType[],
+  edges: { source: string; target: string }[],
+  startNodeId: string,
+  nodeConnection: ConnectionProviderProps
+) => {
+  let currentNodeId = startNodeId
+  
+  while (currentNodeId) {
+    const currentNode = nodes.find(node => node.id === currentNodeId)
+    if (!currentNode) break
+
+    if (currentNode.type === 'Condition') {
+      const conditionResult = evaluateCondition(nodeConnection.conditionNode)
+      if (!conditionResult) {
+        break // Stop if condition is false
+      }
+    }
+
+    // Get next node
+    const nextNodes = getNextNodes(currentNodeId, edges)
+    currentNodeId = nextNodes[0] // Assume linear flow for now
   }
 }

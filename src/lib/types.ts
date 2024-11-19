@@ -120,3 +120,11 @@ export const EmailConfigSchema = z.object({
   subject: z.string().min(1, 'Subject is required'),
   body: z.string().min(1, 'Body is required'),
 })
+
+export type ConditionConfig = {
+  leftOperand: string
+  operator: ConditionOperator | undefined
+  rightOperand: string
+}
+
+export type ConditionOperator = 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains'
