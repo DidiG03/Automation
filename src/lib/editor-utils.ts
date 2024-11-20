@@ -254,28 +254,26 @@ export const loadTemplatesFromWorkflow = async (
   }
 }
 
-export const evaluateCondition = (condition: {
-  leftOperand: string,
-  operator: ConditionOperator | undefined,
-  rightOperand: string
-}) => {
-  const { leftOperand, operator, rightOperand } = condition
+interface ConditionEvaluation {
+  leftOperand: string;
+  operator: ConditionOperator | string;
+  rightOperand: string;
+}
 
-  if (!operator) return false
-
+export const evaluateCondition = ({ leftOperand, operator, rightOperand }: ConditionEvaluation): boolean => {
   switch (operator) {
     case 'equals':
-      return leftOperand === rightOperand
+      return leftOperand === rightOperand;
     case 'not_equals':
-      return leftOperand !== rightOperand
+      return leftOperand !== rightOperand;
     case 'greater_than':
-      return Number(leftOperand) > Number(rightOperand)
+      return Number(leftOperand) > Number(rightOperand);
     case 'less_than':
-      return Number(leftOperand) < Number(rightOperand)
+      return Number(leftOperand) < Number(rightOperand);
     case 'contains':
-      return leftOperand.includes(rightOperand)
+      return leftOperand.includes(rightOperand);
     default:
-      return false
+      return false;
   }
 }
 
@@ -301,9 +299,22 @@ export const processWorkflowNodes = async (
     if (!currentNode) break
 
     if (currentNode.type === 'Condition') {
-      const conditionResult = evaluateCondition(nodeConnection.conditionNode)
-      if (!conditionResult) {
-        break // Stop if condition is false
+      // Get the condition config for this specific node
+      const conditionConfig = nodeConnection.conditionNodes[currentNodeId]
+      
+      if (conditionConfig) {
+        const conditionResult = evaluateCondition({
+          leftOperand: conditionConfig.leftOperand || '',
+          operator: conditionConfig.operator || 'equals',
+          rightOperand: conditionConfig.rightOperand || ''
+        })
+        
+        if (!conditionResult) {
+          break // Stop if condition is false
+        }
+      } else {
+        console.warn(`No condition configuration found for node ${currentNodeId}`)
+        break
       }
     }
 

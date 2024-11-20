@@ -11,6 +11,7 @@ import { postMessageToSlack } from '@/app/(main)/(pages)/connections/_actions/sl
 import { createWorkflowTrigger } from '../../_actions/trigger-actions'
 import { saveEmailTemplate } from '@/app/(main)/(pages)/connections/_actions/save-email-template'
 import { saveConditionTemplate } from '@/app/(main)/(pages)/connections/_actions/save-condition-template'
+import { useEditor } from '@/providers/editor-provider'
 
 type Props = {
   currentService: string
@@ -27,6 +28,7 @@ const ActionButton = ({
 }: Props) => {
   const pathname = usePathname()
   const workflowId = pathname.split('/').pop()!
+  const { state } = useEditor()
 
   const onSendDiscordMessage = useCallback(async () => {
     const response = await postContentToWebHook(
@@ -232,9 +234,17 @@ const ActionButton = ({
   }, [nodeConnection.emailNode, workflowId])
 
   const onSaveConditionTemplate = useCallback(async () => {
-    if (!nodeConnection.conditionNode.leftOperand || 
-        !nodeConnection.conditionNode.operator || 
-        !nodeConnection.conditionNode.rightOperand) {
+    const selectedNodeId = state.editor.selectedNode?.id
+    if (!selectedNodeId) {
+      toast.error('No node selected')
+      return
+    }
+
+    const currentCondition = nodeConnection.conditionNodes[selectedNodeId]
+    if (!currentCondition || 
+        !currentCondition.leftOperand || 
+        !currentCondition.operator || 
+        !currentCondition.rightOperand) {
       toast.error('Please fill in all condition fields')
       return
     }
@@ -242,8 +252,8 @@ const ActionButton = ({
     try {
       const response = await saveConditionTemplate({
         workflowId,
-        name: `${nodeConnection.conditionNode.leftOperand} ${nodeConnection.conditionNode.operator} ${nodeConnection.conditionNode.rightOperand}`,
-        condition: nodeConnection.conditionNode
+        name: `${currentCondition.leftOperand} ${currentCondition.operator} ${currentCondition.rightOperand}`,
+        condition: currentCondition
       })
 
       if (response.success) {
@@ -254,31 +264,39 @@ const ActionButton = ({
     } catch (error) {
       toast.error('Failed to save condition template')
     }
-  }, [nodeConnection.conditionNode, workflowId])
+  }, [nodeConnection.conditionNodes, workflowId, state.editor.selectedNode])
 
   const onSaveAndLoadConditionTemplate = useCallback(async () => {
-    if (!nodeConnection.conditionNode.leftOperand || 
-        !nodeConnection.conditionNode.operator || 
-        !nodeConnection.conditionNode.rightOperand) {
+    const selectedNodeId = state.editor.selectedNode?.id
+    if (!selectedNodeId) {
+      toast.error('No node selected')
+      return
+    }
+
+    const currentCondition = nodeConnection.conditionNodes[selectedNodeId]
+    if (!currentCondition || 
+        !currentCondition.leftOperand || 
+        !currentCondition.operator || 
+        !currentCondition.rightOperand) {
       toast.error('Please fill in all condition fields')
       return
     }
 
     try {
-      const templateName = `${nodeConnection.conditionNode.leftOperand} ${nodeConnection.conditionNode.operator} ${nodeConnection.conditionNode.rightOperand}`
+      const templateName = `${currentCondition.leftOperand} ${currentCondition.operator} ${currentCondition.rightOperand}`
       const response = await saveConditionTemplate({
         workflowId,
         name: templateName,
-        condition: nodeConnection.conditionNode
+        condition: currentCondition
       })
 
       if (response.success) {
-        nodeConnection.setConditionNode(prev => ({
-          ...prev,
-          savedTemplates: prev.savedTemplates 
-            ? [...prev.savedTemplates, templateName]
+        nodeConnection.setConditionNode(selectedNodeId, {
+          ...currentCondition,
+          savedTemplates: currentCondition.savedTemplates 
+            ? [...currentCondition.savedTemplates, templateName]
             : [templateName]
-        }))
+        })
         toast.success('Condition template saved and loaded')
       } else {
         toast.error(response.error || 'Failed to save condition template')
@@ -286,7 +304,7 @@ const ActionButton = ({
     } catch (error) {
       toast.error('Failed to save condition template')
     }
-  }, [nodeConnection.conditionNode, workflowId])
+  }, [nodeConnection.conditionNodes, workflowId, state.editor.selectedNode])
 
   const renderActionButton = () => {
     switch (currentService) {
@@ -370,12 +388,6 @@ const ActionButton = ({
               variant="outline"
             >
               Save Condition
-            </Button>
-            <Button 
-              onClick={onSaveAndLoadConditionTemplate}
-              variant="outline"
-            >
-              Save & Load Condition
             </Button>
           </>
         )

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     // Get existing templates or initialize empty array
-    const existingTemplates = workflow.conditionTemplates 
+    const existingTemplates = workflow.conditionTemplates
       ? (workflow.conditionTemplates as any[])
       : []
 

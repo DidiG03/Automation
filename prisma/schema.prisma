@@ -113,7 +113,7 @@ model Workflows {
   notionTemplate    String?
   slackTemplate     String?
   emailTemplates    EmailTemplate[]
-  conditionTemplates Json?
+  conditionTemplates ConditionTemplate[]
   slackChannels     String[]
   slackAccessToken  String?
   notionAccessToken String?
@@ -155,4 +155,16 @@ model EmailTemplate {
   updatedAt   DateTime  @updatedAt
 
   @@unique([workflowId, name]) // Now this works correctly
+}
+
+model ConditionTemplate {
+  id          String    @id @default(uuid())
+  name        String
+  condition   Json      // Store the condition configuration as JSON
+  workflowId  String   
+  workflow    Workflows @relation(fields: [workflowId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([workflowId, name])
 }

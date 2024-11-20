@@ -98,9 +98,10 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
     const nodeType = state.editor.selectedNode.data.title
     const connectionKey = nodeMapper[nodeType] as keyof typeof nodeConnection
     
-    if (!connectionKey || !nodeConnection[connectionKey]) return null
+    if (!connectionKey || !nodeConnection[connectionKey] || typeof nodeConnection[connectionKey] === 'boolean') return null
 
-    const templates = nodeConnection[connectionKey].savedTemplates
+    const node = nodeConnection[connectionKey] as { savedTemplates?: string[] }
+    const templates = node.savedTemplates
     
     if (!templates?.length) {
       return <div className="px-4 py-2 text-sm text-muted-foreground">No saved templates</div>
@@ -187,16 +188,24 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
   }
 
   const renderConditionSettings = () => {
-    const nodeType = state.editor.selectedNode.data.title
-    if (nodeType !== 'Condition') return null
+    const nodeType = state.editor.selectedNode?.data.title
+    const nodeId = state.editor.selectedNode?.id
+
+    if (nodeType !== 'Condition' || !nodeId) return null
 
     const operators: ConditionOperator[] = ['equals', 'not_equals', 'greater_than', 'less_than', 'contains']
+    const currentCondition = nodeConnection.conditionNodes[nodeId]
 
     const testCondition = () => {
+      if (!currentCondition) {
+        console.log('No current condition found')
+        return;
+      }
+
       const result = evaluateCondition({
-        leftOperand: nodeConnection.conditionNode.leftOperand,
-        operator: nodeConnection.conditionNode.operator,
-        rightOperand: nodeConnection.conditionNode.rightOperand
+        leftOperand: currentCondition.leftOperand || '',
+        operator: currentCondition.operator || 'equals',
+        rightOperand: currentCondition.rightOperand || ''
       })
       toast.info(`Condition evaluates to: ${result.toString().toUpperCase()}`)
     }
@@ -207,24 +216,45 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
           <label className="text-sm font-medium">Left Operand</label>
           <Input
             placeholder="Enter left operand (e.g., 'hello' or '10')"
-            value={nodeConnection.conditionNode.leftOperand}
-            onChange={(e) => nodeConnection.setConditionNode(prev => ({
-              ...prev,
-              leftOperand: e.target.value
-            }))}
+            value={currentCondition?.leftOperand || ''}
+            onChange={(e) => {
+              nodeConnection.setConditionNode(nodeId, {
+                ...currentCondition || {},
+                leftOperand: e.target.value,
+                operator: currentCondition?.operator,
+                rightOperand: currentCondition?.rightOperand || '',
+                savedTemplates: currentCondition?.savedTemplates || [],
+                condition: currentCondition?.condition || {
+                  type: '',
+                  value: null,
+                  operator: 'equals'
+                },
+                templateName: currentCondition?.templateName || ''
+              })
+            }}
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Operator</label>
           <Select
-            value={nodeConnection.conditionNode.operator || ''}
-            onValueChange={(value: ConditionOperator) => 
-              nodeConnection.setConditionNode(prev => ({
-                ...prev,
-                operator: value
-              }))
-            }
+            value={currentCondition?.operator || ''}
+            onValueChange={(value: ConditionOperator) => {
+              console.log('Operator changed:', value)
+              nodeConnection.setConditionNode(nodeId, {
+                ...currentCondition || {},
+                leftOperand: currentCondition?.leftOperand || '',
+                operator: value,
+                rightOperand: currentCondition?.rightOperand || '',
+                savedTemplates: currentCondition?.savedTemplates || [],
+                condition: currentCondition?.condition || {
+                  type: '',
+                  value: null,
+                  operator: value
+                },
+                templateName: currentCondition?.templateName || ''
+              })
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select operator" />
@@ -243,11 +273,23 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
           <label className="text-sm font-medium">Right Operand</label>
           <Input
             placeholder="Enter right operand (e.g., 'hello' or '5')"
-            value={nodeConnection.conditionNode.rightOperand}
-            onChange={(e) => nodeConnection.setConditionNode(prev => ({
-              ...prev,
-              rightOperand: e.target.value
-            }))}
+            value={currentCondition?.rightOperand || ''}
+            onChange={(e) => {
+              console.log('Right operand changed:', e.target.value)
+              nodeConnection.setConditionNode(nodeId, {
+                ...currentCondition || {},
+                leftOperand: currentCondition?.leftOperand || '',
+                operator: currentCondition?.operator,
+                rightOperand: e.target.value,
+                savedTemplates: currentCondition?.savedTemplates || [],
+                condition: currentCondition?.condition || {
+                  type: '',
+                  value: null,
+                  operator: currentCondition?.operator || 'equals'
+                },
+                templateName: currentCondition?.templateName || ''
+              })
+            }}
           />
         </div>
 
@@ -279,7 +321,7 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
   return (
     <aside className="h-full">
       <Tabs defaultValue="nodes">
-      <TabsList className="bg-transparent">
+        <TabsList className="bg-transparent">
           <TabsTrigger value="actions">Actions</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -357,23 +399,25 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
             collapsible
             className="w-full"
           >
-            <AccordionItem
-              value="account"
-              className="border-y-[1px] px-2"
-            >
-              <AccordionTrigger className="!no-underline">
-                Account
-              </AccordionTrigger>
-              <AccordionContent>
-                {CONNECTIONS.map((connection) => (
-                  <RenderConnectionAccordion
-                    key={connection.title}
-                    state={state}
-                    connection={connection}
-                  />
-                ))}
-              </AccordionContent>
-            </AccordionItem>
+            {state.editor.selectedNode.data.title !== 'Condition' && (
+              <AccordionItem
+                value="account"
+                className="border-y-[1px] px-2"
+              >
+                <AccordionTrigger className="!no-underline">
+                  Account
+                </AccordionTrigger>
+                <AccordionContent>
+                  {CONNECTIONS.map((connection) => (
+                    <RenderConnectionAccordion
+                      key={connection.title}
+                      state={state}
+                      connection={connection}
+                    />
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            )}
             <AccordionItem
               value="action"
               className="px-2"
@@ -392,14 +436,16 @@ const EditorCanvasSidebar = ({ nodes }: Props) => {
                 )}
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="saved" className='px-2'>
-              <AccordionTrigger className='!no-underline'>
-                Saved
-              </AccordionTrigger>
-              <AccordionContent>
-                {renderSavedTemplates()}
-              </AccordionContent>
-            </AccordionItem>
+            {state.editor.selectedNode.data.title !== 'Condition' && (
+              <AccordionItem value="saved" className='px-2'>
+                <AccordionTrigger className='!no-underline'>
+                  Saved
+                </AccordionTrigger>
+                <AccordionContent>
+                  {renderSavedTemplates()}
+                </AccordionContent>
+              </AccordionItem>
+            )}
           </Accordion>
         </TabsContent>
         <TabsContent value="execution">

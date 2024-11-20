@@ -36,12 +36,11 @@ export type EmailNode = {
   }
 }
 
-export type ConditionNode = {
-  leftOperand: string
-  operator: ConditionOperator | undefined
-  rightOperand: string
-  savedTemplates?: string[]
-}
+export type ConditionNode = ConditionConfig
+
+type ConditionNodes = {
+  [nodeId: string]: ConditionConfig | undefined;
+};
 
 export type ConnectionProviderProps = {
   discordNode: DiscordNode
@@ -63,8 +62,8 @@ export type ConnectionProviderProps = {
   triggerNode: TriggerNode
   setTriggerNode: React.Dispatch<React.SetStateAction<TriggerNode>>
   setNotionNode: React.Dispatch<React.SetStateAction<any>>
-  conditionNode: ConditionConfig
-  setConditionNode: React.Dispatch<React.SetStateAction<ConditionConfig>>
+  conditionNodes: ConditionNodes
+  setConditionNode: (nodeId: string, config: ConditionConfig) => void
   slackNode: {
     appId: string
     authedUserId: string
@@ -140,12 +139,7 @@ const InitialValues: ConnectionProviderProps = {
     savedTemplates: [],
   },
   isLoading: false,
-  conditionNode: {
-    leftOperand: '',
-    operator: undefined,
-    rightOperand: '',
-    savedTemplates: [],
-  },
+  conditionNodes: {},
   setGoogleNode: () => undefined,
   setDiscordNode: () => undefined,
   setNotionNode: () => undefined,
@@ -154,7 +148,7 @@ const InitialValues: ConnectionProviderProps = {
   setWorkFlowTemplate: () => undefined,
   setTriggerNode: () => undefined,
   setEmailNode: () => undefined,
-  setConditionNode: () => undefined,
+  setConditionNode: (nodeId: string, config: ConditionConfig) => undefined,
 }
 
 const ConnectionsContext = createContext(InitialValues)
@@ -168,7 +162,15 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
   const [triggerNode, setTriggerNode] = useState(InitialValues.triggerNode)
   const [isLoading, setIsLoading] = useState(InitialValues.isLoading)
   const [emailNode, setEmailNode] = useState(InitialValues.emailNode)
-  const [conditionNode, setConditionNode] = useState(InitialValues.conditionNode)
+  const [conditionNodes, setConditionNodes] = useState<ConditionNodes>({});
+
+  const setConditionNode = (nodeId: string, config: ConditionConfig) => {
+    setConditionNodes(prev => ({
+      ...prev,
+      [nodeId]: config
+    }));
+  };
+
   const [workflowTemplate, setWorkFlowTemplate] = useState(
     InitialValues.workflowTemplate
   )
@@ -189,7 +191,7 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
     setWorkFlowTemplate,
     emailNode,
     setEmailNode,
-    conditionNode,
+    conditionNodes,
     setConditionNode,
   }
 

@@ -1,14 +1,16 @@
 import { ConditionConfig } from '@/lib/types'
 
+interface SaveConditionTemplateParams {
+  workflowId: string
+  name: string
+  condition: ConditionConfig
+}
+
 export const saveConditionTemplate = async ({
   workflowId,
   name,
   condition
-}: {
-  workflowId: string
-  name: string
-  condition: ConditionConfig
-}) => {
+}: SaveConditionTemplateParams) => {
   try {
     const response = await fetch('/api/conditions', {
       method: 'POST',

@@ -121,11 +121,30 @@ export const EmailConfigSchema = z.object({
   body: z.string().min(1, 'Body is required'),
 })
 
+export type ConditionOperator = 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains'
+
 export type ConditionConfig = {
   leftOperand: string
   operator: ConditionOperator | undefined
   rightOperand: string
   savedTemplates?: string[]
+  condition?: {
+    type: string
+    value: any
+    operator: ConditionOperator
+  }
+  templateName?: string
 }
 
-export type ConditionOperator = 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains'
+export type ConditionTemplate = {
+  id: string
+  name: string
+  condition: {
+    type: string
+    value: any
+    operator: ConditionOperator
+  }
+  workflowId: string
+  createdAt: Date
+  updatedAt: Date
+}

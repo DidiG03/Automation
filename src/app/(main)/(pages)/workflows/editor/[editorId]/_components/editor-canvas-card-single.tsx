@@ -1,4 +1,4 @@
-import { EditorCanvasCardType } from '@/lib/types'
+import { ConditionConfig, EditorCanvasCardType } from '@/lib/types'
 import { useEditor } from '@/providers/editor-provider'
 import React, { useMemo } from 'react'
 import { Position, useNodeId } from 'reactflow'
@@ -31,9 +31,26 @@ const EditorCanvasCardSingle = ({ data }: { data: EditorCanvasCardType }) => {
   const { nodeConnection } = useNodeConnections()
   const pathname = usePathname()
   const nodeId = useNodeId()
+
+  // Add a guard to ensure nodeId exists and is a string
+  if (!nodeId) return null;
+
   const logo = useMemo(() => {
     return <EditorCanvasIconHelper type={data.type} />
   }, [data])
+
+  // Add this helper function to format the condition name
+  const getConditionName = (conditionConfig: ConditionConfig | undefined) => {
+    if (!conditionConfig) return 'Not set';
+    
+    const { leftOperand, operator, rightOperand } = conditionConfig;
+    if (!leftOperand || !operator || !rightOperand) return 'Incomplete condition';
+    
+    // Format the operator for better readability
+    const displayOperator = operator.replace(/_/g, ' ');
+    
+    return `${leftOperand} ${displayOperator} ${rightOperand}`;
+  }
 
   const renderTriggerButton = () => {
     if (data.type !== 'Trigger' || !nodeConnection.triggerNode.loadedTrigger) return null;
@@ -129,6 +146,31 @@ const EditorCanvasCardSingle = ({ data }: { data: EditorCanvasCardType }) => {
         </>
       )
     }
+
+    if (data.type === 'Condition') {
+      const conditionConfig = nodeConnection.conditionNodes[nodeId as string]
+      return (
+        <>
+          <p className="text-xs text-muted-foreground/50">
+            <b className="text-muted-foreground/80">Condition: </b>
+            {getConditionName(conditionConfig)}
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            <b className="text-muted-foreground/80">Status: </b>
+            {conditionConfig?.leftOperand && conditionConfig?.operator && conditionConfig?.rightOperand ? (
+              <span className="text-green-500">Configured</span>
+            ) : (
+              <span className="text-yellow-500">Not Configured</span>
+            )}
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            <b className="text-muted-foreground/80">ID: </b>
+            {nodeId}
+          </p>
+        </>
+      )
+    }
+
     return (
       <p className="text-xs text-muted-foreground/50">
         <b className="text-muted-foreground/80">ID: </b>
@@ -136,6 +178,45 @@ const EditorCanvasCardSingle = ({ data }: { data: EditorCanvasCardType }) => {
       </p>
     )
   }
+
+  const renderConditionButton = () => {
+    if (data.type !== 'Condition') return null;
+
+    return (
+      <Button 
+        size="sm"
+        variant="ghost"
+        className="absolute bottom-1 right-1"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          nodeConnection.setConditionNode(nodeId as string, {
+            leftOperand: '',
+            operator: undefined,
+            rightOperand: '',
+            savedTemplates: [],
+            condition: {
+              type: '',
+              value: null,
+              operator: 'equals'
+            },
+            templateName: ''
+          });
+        }}
+      >
+        <TooltipProvider>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger>
+              <Book className="h-3 w-3" />
+            </TooltipTrigger>
+            <TooltipContent>  
+              <p className='text-xs font-light'>Configure Condition</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </Button>
+    );
+  };
 
   return (
     <>
@@ -182,6 +263,7 @@ const EditorCanvasCardSingle = ({ data }: { data: EditorCanvasCardType }) => {
           })}
         />
         {renderTriggerButton()}
+        {renderConditionButton()}
       </Card>
       <CustomHandle
         type="source"

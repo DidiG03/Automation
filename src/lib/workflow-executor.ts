@@ -27,6 +27,8 @@ export class WorkflowExecutor {
         return this.executeEmailNode(node, context)
       case 'Trigger':
         return this.executeTriggerNode(node, context)
+      case 'Condition':
+        return this.executeConditionNode(node, context)
       // Add other node types here
       default:
         throw new Error(`Unsupported node type: ${node.type}`)
@@ -93,6 +95,32 @@ export class WorkflowExecutor {
     }
   }
 
+  private async executeConditionNode(node: any, context: NodeExecutionContext) {
+    console.log('\n[executeConditionNode] Starting condition node execution:', node)
+    try {
+      // Fetch condition template from database
+      const conditionTemplate = await db.conditionTemplate.findFirst({
+        where: {
+          workflowId: context.workflowId,
+          name: node.data.templateName
+        }
+      })
+
+      if (!conditionTemplate) {
+        throw new Error('Condition template not found')
+      }
+
+      // Process condition logic using the template
+      const condition = conditionTemplate.condition
+      // ... implement condition evaluation logic ...
+
+      return true
+    } catch (error) {
+      console.error('[executeConditionNode] Error:', error)
+      throw error
+    }
+  }
+
   private async executeNode(node: any, context: NodeExecutionContext) {
     const executionStore = useExecutionStore.getState()
     
@@ -121,7 +149,7 @@ export class WorkflowExecutor {
       // Update step on failure
       executionStore.updateStep(node.id, {
         status: 'failed',
-        message: error.message || `Failed to execute ${node.type} node`,
+        message: (error as Error).message || `Failed to execute ${node.type} node`,
         timestamp: new Date()
       })
       throw error
